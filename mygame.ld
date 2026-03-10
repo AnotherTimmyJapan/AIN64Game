@@ -2,19 +2,20 @@ OUTPUT_ARCH (mips)
 
 SECTIONS
 {
-   /* Rom Header and Bootblock at the start */
+   /* The N64 entry point in RAM */
    . = 0x80000400;
 
    .text : {
-      build/src/main.o(.text);
-      /* Add other engine files here */
+      $(BUILD_DIR)/src/main.o(.text);
+      *(.text)
    }
 
    .data : {
-      build/src/main.o(.data);
+      *(.data)
    }
 
    .bss : {
-      build/src/main.o(.bss);
+      *(.bss)
+      *(COMMON)
    }
 }
