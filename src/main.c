@@ -1,13 +1,20 @@
 #include <ultra64.h>
-#include "main.h"
 
+/* Setup for the boot thread */
 OSThread bootThread;
-STACK(bootStack, 0x1000);
+u64 bootStack[0x1000/8];
+
+void boot(void *arg);
+
+void mainproc(void *arg) {
+    /* Main Game Loop would go here */
+    while (1) {
+        // Just spinning for now
+    }
+}
 
 void boot(void *arg) {
     osInitialize();
-    // Initialize PI, Scheduler, and create the Idle thread
-    osCreateThread(&idleThread, 1, idle, NULL, idleStack + 0x1000, 10);
-    osStartThread(&idleThread);
+    // In a real game, you'd create an idle thread and a main thread here
+    mainproc(NULL);
 }
-
