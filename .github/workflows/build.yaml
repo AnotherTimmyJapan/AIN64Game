@@ -33,20 +33,26 @@ jobs:
           mkdir -p tools
           # 1. Clone and Build IDO Recomp
           git clone --recursive --depth 1 https://github.com/decompals/ido-static-recomp.git tools/ido-recomp
-          cd tools/ido-recomp
+          
+          # MANUALLY BUILD RABBITIZER FIRST
+          cd tools/ido-recomp/tools/rabbitizer
+          make -j$(nproc)
+          
+          # NOW BUILD IDO
+          cd ../..
           make VERSION=5.3 -j$(nproc)
+          
           mkdir -p ../ido5.3
           cp -r build/5.3/out/* ../ido5.3/
           cd ../..
 
-          # 2. Clone LibreUltra for the SDK headers/library
+          # 2. Clone LibreUltra
           git clone --depth 1 https://github.com/n64decomp/libreultra.git tools/libreultra
-          # Note: We will compile this as part of our main Makefile
 
       - name: Build ROM
         run: |
           # Add IDO to the path so the Makefile finds 'cc'
-          export PATH=$PATH:$(pwd)/tools/ido5.3
+          export PATH=$PATH:$(pwd)/tools/ido-recomp
           make -j$(nproc)
 
       - name: Upload Artifact
