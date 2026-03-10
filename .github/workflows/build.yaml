@@ -26,21 +26,21 @@ jobs:
       - name: Setup IDO Recomp
         if: steps.cache-tools.outputs.cache-hit != 'true'
         run: |
+          mkdir -p tools
           git clone https://github.com/n64decomp/ido-static-recomp.git tools/ido-recomp
           cd tools/ido-recomp
           make VERSION=5.3 -j$(nproc)
-          # Move binaries to a reachable tools path
           mkdir -p ../ido5.3
           cp -r build/5.3/out/* ../ido5.3/
 
       - name: Build ROM
         run: |
+          # Add IDO to the path so the Makefile finds 'cc'
           export PATH=$PATH:$(pwd)/tools/ido5.3
           make -j$(nproc)
 
       - name: Upload Artifact
-        uses: upload-artifact@v4
+        uses: actions/upload-artifact@v4
         with:
           name: n64-rom
           path: build/*.z64
-
