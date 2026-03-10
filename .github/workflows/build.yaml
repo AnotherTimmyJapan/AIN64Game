@@ -4,23 +4,43 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: ghcr.io/dragonminded/libdragon:latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y build-essential binutils-mips-linux-gnu gcc-mips-linux-gnu python3 python3-pip ccache libncurses5:i386 libtinfo5:i386
+
+      - name: Cache Tools
+        id: cache-tools
+        uses: actions/cache@v4
+        with:
+          path: tools/
+          key: ${{ runner.os }}-n64-tools-${{ hashFiles('tools/setup.sh') }}
+
+      - name: Setup IDO Recomp
+        if: steps.cache-tools.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/n64decomp/ido-static-recomp.git tools/ido-recomp
+          cd tools/ido-recomp
+          make VERSION=5.3 -j$(nproc)
+          # Move binaries to a reachable tools path
+          mkdir -p ../ido5.3
+          cp -r build/5.3/out/* ../ido5.3/
 
       - name: Build ROM
         run: |
-          # The container uses /n64_toolchain as the base
-          export N64_INST=/n64_toolchain
-          export PATH=$N64_INST/bin:$PATH
-          
-          mkdir -p build
-          # Pass N64_INST directly to make
-          make N64_INST=$N64_INST
-      
-      - name: Upload ROM
-        uses: actions/upload-artifact@v4
+          export PATH=$PATH:$(pwd)/tools/ido5.3
+          make -j$(nproc)
+
+      - name: Upload Artifact
+        uses: upload-artifact@v4
         with:
           name: n64-rom
-          path: "*.z64"
+          path: build/*.z64
+
