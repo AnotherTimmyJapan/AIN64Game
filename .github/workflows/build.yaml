@@ -11,8 +11,11 @@ jobs:
 
       - name: Build ROM
         run: |
-          # Create build directory so the Makefile doesn't complain
+          # 1. Locate where libdragon is actually installed
+          export N64_INST=$(dirname $(dirname $(find / -name n64.mk -print -quit 2>/dev/null)))
+          echo "Found N64_INST at: $N64_INST"
+          
+          # 2. Build
           mkdir -p build
-          # Explicitly point to the internal toolchain path
-          export N64_INST=/n64_toolchain
-          make -j$(nproc)
+          make N64_INST=$N64_INST -j$(nproc)
+
