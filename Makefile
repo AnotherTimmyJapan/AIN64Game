@@ -1,62 +1,65 @@
-# Project Settings
+# --- Project Settings ---
 TARGET := mygame
 BUILD_DIR := build
-# Use LibreUltra headers
-LIBULTRA_DIR := tools/libreultra
-INC_DIRS += $(LIBULTRA_DIR)/include $(LIBULTRA_DIR)/include/PR
+SRC_DIR := src
+ASM_DIR := asm
+TOOLS_DIR := tools
 
-# Tools
+# --- Paths ---
+IDOPATH := $(TOOLS_DIR)/ido5.3
+LIBULTRA_DIR := $(TOOLS_DIR)/libreultra
+
+# --- Tools ---
 CROSS_COMPILE := mips-linux-gnu-
 AS      := $(CROSS_COMPILE)as
 LD      := $(CROSS_COMPILE)ld
 OBJCOPY := $(CROSS_COMPILE)objcopy
-CC      := tools/ido5.3/cc
-ifeq ($(shell uname -s),Linux)
-  # Use the recomp wrapper if on Linux
-  CC := tools/ido5.3/cc
-endif
+CC      := $(IDOPATH)/cc
 
-# Flags
-# -mips2 is required for IDO 5.3 compatibility
-CFLAGS := -Wab,-mips2 -non_shared -G 0 -Xcpluscomm -fullwarn
+# --- Flags ---
+# -mips2 is the target ISA for IDO 5.3
+# -O2 for optimized code, -g for debugging info
+CFLAGS := -Wab,-mips2 -non_shared -G 0 -Xcpluscomm -fullwarn -O2
 ASFLAGS := -march=vr4300 -mabi=32
-LDFLAGS += -L$(LIBULTRA_DIR)/build -lultra
+LDFLAGS := -T $(TARGET).ld -Map $(BUILD_DIR)/$(TARGET).map --no-check-sections
 
-# Directories
-SRC_DIRS := src src/engine
-ASM_DIRS := asm
-INC_DIRS := include $(LIBULTRA)/include
+# --- Includes ---
+# Important: These tell 'cfe' (the IDO compiler) where ultra64.h lives
+INC_DIRS := include include/PR $(LIBULTRA_DIR)/include $(LIBULTRA_DIR)/include/PR
 
-# Files
-C_FILES   := $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.c))
-S_FILES   := $(foreach dir,$(ASM_DIRS),$(wildcard $(dir)/*.s))
+# --- Files ---
+C_FILES   := $(wildcard $(SRC_DIR)/*.c)
+S_FILES   := $(wildcard $(ASM_DIR)/*.s)
 O_FILES   := $(addprefix $(BUILD_DIR)/,$(C_FILES:.c=.o)) \
              $(addprefix $(BUILD_DIR)/,$(S_FILES:.s=.o))
 
-# Rules
+# --- Build Rules ---
 default: all
 
 all: $(BUILD_DIR)/$(TARGET).z64
 
-# Compile C files using IDO
-$(BUILD_DIR)/src/%.o: src/%.c
+# Rule for C files
+$(BUILD_DIR)/$(SRC_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(@D)
 	$(CC) -c $(CFLAGS) $(foreach dir,$(INC_DIRS),-I$(dir)) -o $@ $<
 
-# Assemble ASM files
-$(BUILD_DIR)/asm/%.o: asm/%.s
+# Rule for ASM files
+$(BUILD_DIR)/$(ASM_DIR)/%.o: $(ASM_DIR)/%.s
 	@mkdir -p $(@D)
 	$(AS) $(ASFLAGS) -o $@ $<
 
-# Link the ROM
+# Link the ELF
 $(BUILD_DIR)/$(TARGET).elf: $(O_FILES)
-	$(LD) $(LDFLAGS) -o $@
+	$(LD) $(LDFLAGS) -o $@ $(O_FILES) -L$(LIBULTRA_DIR)/build -lultra
 
-# Convert ELF to Z64 (N64 ROM)
+# Convert ELF to ROM
 $(BUILD_DIR)/$(TARGET).z64: $(BUILD_DIR)/$(TARGET).elf
 	$(OBJCOPY) $< $@ -O binary
+	@echo "--------------------------------"
 	@echo "Build Successful: $@"
+	@echo "--------------------------------"
 
 clean:
 	rm -rf $(BUILD_DIR)
 
+.PHONY: all clean
