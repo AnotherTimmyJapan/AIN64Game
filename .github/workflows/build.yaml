@@ -51,9 +51,16 @@ jobs:
 
       - name: Build ROM
         run: |
-          # Add IDO to the path so the Makefile finds 'cc'
-          export PATH=$PATH:$(pwd)/tools/ido-recomp
+          # 1. Create the symlink for headers
+          mkdir -p include
+          ln -s $(pwd)/tools/libreultra/include/PR include/PR
+          
+          # 2. Set up Path for IDO
+          export PATH=$PATH:$(pwd)/tools/ido5.3
+          
+          # 3. Run the Build
           make -j$(nproc)
+
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
