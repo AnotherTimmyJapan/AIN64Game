@@ -20,7 +20,6 @@ jobs:
           # Install legacy libraries
           sudo apt-get install -y libncurses5:i386 libtinfo5:i386
 
-
       - name: Cache Tools
         id: cache-tools
         uses: actions/cache@v4
@@ -32,8 +31,11 @@ jobs:
         if: steps.cache-tools.outputs.cache-hit != 'true'
         run: |
           mkdir -p tools
-          git clone https://github.com/n64decomp/ido-static-recomp.git tools/ido-recomp
+          # Use --depth 1 to save time and avoid credential hangs on large history
+          git clone --depth 1 https://github.com/n64decomp/ido-static-recomp.git tools/ido-recomp
           cd tools/ido-recomp
+          # We need to initialize submodules for IDO recomp to build
+          git submodule update --init --recursive
           make VERSION=5.3 -j$(nproc)
           mkdir -p ../ido5.3
           cp -r build/5.3/out/* ../ido5.3/
