@@ -1,16 +1,15 @@
-# Default N64_INST if not set (for local builds)
-N64_INST ?= /usr/local
+# If N64_INST isn't set, try the container default or local default
+N64_INST ?= /n64_toolchain
 
-# Correct path for modern libdragon
-include $(N64_INST)/include/n64.mk
+# Include the core N64 build rules
+# Try the most likely paths in the container
+-include $(N64_INST)/include/n64.mk
+-include $(N64_INST)/libdragon.mk
 
-# Your game name
 PROG_NAME = mygame
-
-# Object files
 OBJS = build/main.o
 
-# Final ROM Target
+# The .z64 target is defined in n64.mk, we just need to link it
 $(PROG_NAME).z64: $(OBJS)
 
 build/main.o: main.c
