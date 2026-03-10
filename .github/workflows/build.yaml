@@ -11,11 +11,16 @@ jobs:
 
       - name: Build ROM
         run: |
-          # 1. Locate where libdragon is actually installed
-          export N64_INST=$(dirname $(dirname $(find / -name n64.mk -print -quit 2>/dev/null)))
-          echo "Found N64_INST at: $N64_INST"
+          # The container uses /n64_toolchain as the base
+          export N64_INST=/n64_toolchain
+          export PATH=$N64_INST/bin:$PATH
           
-          # 2. Build
           mkdir -p build
-          make N64_INST=$N64_INST -j$(nproc)
-
+          # Pass N64_INST directly to make
+          make N64_INST=$N64_INST
+      
+      - name: Upload ROM
+        uses: actions/upload-artifact@v4
+        with:
+          name: n64-rom
+          path: "*.z64"
