@@ -1,0 +1,22 @@
+name: Build N64 ROM
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ghcr.io/dragonminded/libdragon:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build ROM
+        run: |
+          # The container sets up the environment; we just run make
+          make -j$(nproc)
+      
+      - name: Upload ROM
+        uses: actions/upload-artifact@v4
+        with:
+          name: my-n64-game
+          path: "*.z64"
+
