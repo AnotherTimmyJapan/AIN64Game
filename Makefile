@@ -1,7 +1,9 @@
 # Project Settings
 TARGET := mygame
 BUILD_DIR := build
-LIBULTRA := libultra # Path to your libultra fork
+# Use LibreUltra headers
+LIBULTRA_DIR := tools/libreultra
+INC_DIRS += $(LIBULTRA_DIR)/include $(LIBULTRA_DIR)/include/PR
 
 # Tools
 CROSS_COMPILE := mips-linux-gnu-
@@ -18,7 +20,7 @@ endif
 # -mips2 is required for IDO 5.3 compatibility
 CFLAGS := -Wab,-mips2 -non_shared -G 0 -Xcpluscomm -fullwarn
 ASFLAGS := -march=vr4300 -mabi=32
-LDFLAGS := -T $(TARGET).ld -Map $(BUILD_DIR)/$(TARGET).map --no-check-sections
+LDFLAGS += -L$(LIBULTRA_DIR)/build -lultra
 
 # Directories
 SRC_DIRS := src src/engine
